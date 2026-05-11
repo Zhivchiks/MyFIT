@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Nutrition Diary</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Дневник">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Neucha&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f24e1e; --accent: #a5dcf2; --success: #27ae60;
+            --warning: #f1c40f; --danger: #e74c3c; --dark: #4a4a4a; 
+            --bg: #fdfaf5; --white: #ffffff; --text-muted: #7f8c8d;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Neucha', cursive; 
+            background: var(--bg); color: var(--dark); 
+            margin: 0; 
+            padding: calc(env(safe-area-inset-top) + 15px) 15px calc(env(safe-area-inset-bottom) + 50px) 15px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+
+        .status-bar { 
+            background: var(--white); padding: 20px; border-radius: 25px; 
+            margin-bottom: 25px; position: sticky; top: env(safe-area-inset-top); z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f0ece6;
+        }
+        .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
+        .stat-item p { margin: 0; font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; margin-bottom: 4px; font-weight: bold; }
+        .stat-item span { font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 700; display: block; }
+        .target-val { font-family: 'Inter', sans-serif; font-size: 0.6rem; color: var(--text-muted); cursor: pointer; text-decoration: underline dotted; }
+        .battery-box { background: var(--bg); height: 10px; border-radius: 10px; overflow: hidden; margin-top: 8px; border: 1px solid #eee; }
+        .battery-fill { height: 100%; width: 0%; transition: width 0.6s ease; }
+
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        #date-label { font-size: 1.6rem; color: var(--primary); }
+        .day-tabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 25px; }
+        .day-tab { background: var(--white); padding: 12px 2px; border-radius: 15px; text-align: center; border: 1px solid #eee; cursor: pointer; }
+        .day-tab.active { background: var(--accent); transform: scale(1.05); }
+
+        .meal-section { background: var(--white); border-radius: 25px; padding: 20px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
+        .active-meal { border: 2px solid var(--accent); }
+        
+        .cat-filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .cat-btn { border: none; padding: 8px 18px; border-radius: 25px; background: var(--accent); font-family: 'Neucha'; font-size: 1.1rem; opacity: 0.6; }
+        .cat-btn.active { opacity: 1; background: var(--primary); color: white; }
+
+        .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #fdfaf5; align-items: center; }
+        .editable-name { font-weight: 600; font-size: 1.2rem; }
+        .item-nutrients { font-family: 'Inter', sans-serif; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+        .kcal-badge { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1rem; color: var(--primary); }
+        .meal-footer { margin-top: 15px; font-weight: 600; font-size: 0.9rem; border-top: 2px solid var(--bg); padding-top: 10px; font-family: 'Inter', sans-serif; }
+
+        .btn { border: none; padding: 12px 25px; border-radius: 25px; font-family: 'Neucha'; font-size: 1.2rem; background: var(--primary); color: white; -webkit-appearance: none; }
+        .btn-sec { background: var(--accent); color: var(--dark); }
+
+        .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .prod-card { background: var(--white); padding: 15px; border-radius: 25px; text-align: center; border: 1px solid #f0ece6; }
+        .prod-card img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; }
+
+        .search-box { width: 100%; padding: 15px; border-radius: 25px; border: 1px solid #eee; margin-bottom: 20px; font-size: 1.2rem; font-family: 'Neucha'; background: var(--white); outline: none; -webkit-appearance: none; }
+        
+        .week-report { background: var(--white); border-radius: 25px; padding: 25px; margin-top: 40px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 400px; }
+        th { padding: 10px 5px; color: var(--primary); border-bottom: 2px solid var(--bg); font-size: 1.2rem; }
+        td { padding: 12px 5px; border-bottom: 1px solid var(--bg); text-align: center; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="status-bar">
+        <div class="stat-row">
+            <div class="stat-item"><p>Ккал</p><div class="target-val" onclick="editDayTarget('k')" id="target-k-btn">цель:...</div><span id="d-k">0</span><div class="battery-box"><div id="bar-k" class="battery-fill"></div></div></div>
+            <div class="stat-item"><p>Белки</p><div class="target-val" onclick="editDayTarget('b')" id="target-b-btn">цель:...</div><span id="d-b">0</span><div class="battery-box"><div id="bar-b" class="battery-fill"></div></div></div>
+            <div class="stat-item"><p>Жиры</p><div class="target-val" onclick="editDayTarget('j')" id="target-j-btn">цель:...</div><span id="d-j">0</span><div class="battery-box"><div id="bar-j" class="battery-fill"></div></div></div>
+            <div class="stat-item"><p>Углев.</p><div class="target-val" style="opacity:0">.</div><span id="d-u">0</span><div class="battery-box"><div id="bar-u" class="battery-fill" style="background:var(--accent)"></div></div></div>
+        </div>
+    </div>
+
+    <div class="nav-header">
+        <button class="btn btn-sec" onclick="changeW(-7)">←</button>
+        <div id="date-label"></div>
+        <button class="btn btn-sec" onclick="changeW(7)">→</button>
+    </div>
+    <div class="day-tabs" id="day-tabs"></div>
+
+    <div style="display:flex; gap:10px; margin-bottom:25px;">
+        <button class="btn" style="flex:2;" onclick="copyYesterday()">КОПИРОВАТЬ ВЧЕРА</button>
+        <button class="btn btn-sec" style="flex:1;" onclick="clearDay()">ОЧИСТИТЬ</button>
+    </div>
+
+    <div id="meals">
+        <div class="meal-section" id="m1"><div class="meal-header"><span class="meal-title">Завтрак</span><button class="btn" style="padding:5px 20px" onclick="setActive('m1')">Выбрать</button></div><div id="list-m1"></div><div class="meal-footer" id="foot-m1"></div></div>
+        <div class="meal-section" id="m2"><div class="meal-header"><span class="meal-title">Обед</span><button class="btn" style="padding:5px 20px" onclick="setActive('m2')">Выбрать</button></div><div id="list-m2"></div><div class="meal-footer" id="foot-m2"></div></div>
+        <div class="meal-section" id="m3"><div class="meal-header"><span class="meal-title">Ужин</span><button class="btn" style="padding:5px 20px" onclick="setActive('m3')">Выбрать</button></div><div id="list-m3"></div><div class="meal-footer" id="foot-m3"></div></div>
+    </div>
+
+    <h2 style="font-size: 2rem; margin: 40px 0 20px;">Магазин</h2>
+    <input type="text" class="search-box" id="search-input" placeholder="Найти продукт..." oninput="renderCatalog()">
+    <div class="cat-filters" id="shop-filters"></div>
+    <div class="prod-grid" id="catalog"></div>
+
+    <h2 style="font-size: 2rem; margin: 40px 0 20px;">Кафе</h2>
+    <input type="text" class="search-box" id="search-cafe" placeholder="Найти в кафе..." oninput="renderCafe()">
+    <div class="cat-filters" id="cafe-filters"></div>
+    <div class="prod-grid" id="cafe-catalog"></div>
+
+    <div class="week-report">
+        <h2 style="font-size:1.8rem; margin-bottom:20px; color: var(--primary)">Сводка за неделю</h2>
+        <table>
+            <thead><tr><th>Дата</th><th>Ккал</th><th>Б</th><th>Ж</th><th>У</th></tr></thead>
+            <tbody id="week-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const products = [
+        { name: "Карпаччо курица", kcal: 114, b: 25, j: 0.7, u: 2, cat: "Мясо и Рыба", type: "shop", img: "img for app/carpaccio.jpg" },
+        { name: "Миндальное молоко", kcal: 22, b: 0.4, j: 1.2, u: 2.8, cat: "Молочка", type: "shop", img: "img for app/milk.jpg" },
+        { name: "Пудинг Эрман", kcal: 80, b: 10, j: 1.5, u: 6.4, cat: "Сладости", type: "shop", img: "img for app/pudding.jpg" },
+        { name: "Геркулес хлопья", kcal: 360, b: 12, j: 6, u: 62, cat: "Крупы", type: "shop", img: "img for app/oats.jpg" },
+        { name: "Kinder Ломтик", kcal: 421, b: 7.8, j: 27.8, u: 33.9, cat: "Сладости", type: "shop", img: "img for app/kinder_slice.jpg" },
+        { name: "Kinder Шоколад", kcal: 568, b: 8.8, j: 35.2, u: 53.6, cat: "Сладости", type: "shop", img: "img for app/kinder_choc.jpg" },
+        { name: "Чиабатта", kcal: 227, b: 7.9, j: 3, u: 42.3, cat: "Мучное", type: "shop", img: "img for app/bread.jpg" },
+        { name: "Яйца куриные", kcal: 157, b: 12.7, j: 11.5, u: 0.7, cat: "Мясо и Рыба", type: "shop", img: "img for app/eggs.jpg" },
+        { name: "Ветчина индейка (ВВ)", kcal: 95, b: 13, j: 4.5, u: 1, cat: "Мясо и Рыба", type: "shop", img: "img for app/ham.jpg" },
+        { name: "Kinder Delice", kcal: 455, b: 5.8, j: 22.6, u: 54.9, cat: "Сладости", type: "shop", img: "img for app/delice.jpg" },
+        { name: "Kinder Яйцо", kcal: 552, b: 8.1, j: 34.2, u: 52.3, cat: "Сладости", type: "shop", img: "img for app/kinder_egg.jpg" },
+        { name: "Йогурт TEOS 5%", kcal: 91, b: 7, j: 5, u: 4.2, cat: "Молочка", type: "shop", img: "img for app/teos.jpg" },
+        { name: "Булка Много Мака", kcal: 454, b: 8.3, j: 18.5, u: 63.6, cat: "Братья Караваевы", type: "cafe", img: "img for app/mak.jpg" },
+        { name: "Бутер Ветчина-Омлет-Сыр", kcal: 270, b: 11, j: 15, u: 22, cat: "Братья Караваевы", type: "cafe", img: "img for app/sandwich.jpg" }
+    ];
+
+    let currentBase = new Date();
+    currentBase.setDate(currentBase.getDate() - (currentBase.getDay() === 0 ? 6 : currentBase.getDay() - 1));
+    let activeDate = new Date().toISOString().split('T')[0];
+    let activeM = 'm1', shopCat = 'Все', cafeCat = 'Все';
+    
+    // Возвращаем ключи из версии 29, чтобы данные не пропали
+    let log = JSON.parse(localStorage.getItem('nutri_log_v29')) || {};
+    let customTargets = JSON.parse(localStorage.getItem('nutri_targets_v29')) || {};
+
+    function render() {
+        document.getElementById('date-label').innerText = new Date(activeDate).toLocaleDateString('ru-RU', {month:'long', year:'numeric'});
+        const tabs = document.getElementById('day-tabs'); tabs.innerHTML = '';
+        let t = new Date(currentBase);
+        for(let i=0; i<7; i++) {
+            let s = t.toISOString().split('T')[0];
+            let d = document.createElement('div');
+            d.className = `day-tab ${s === activeDate ? 'active' : ''}`;
+            d.innerHTML = `<div style="font-size:0.8rem; opacity:0.6">${['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'][i]}</div><div style="font-weight:700">${t.getDate()}</div>`;
+            d.onclick = () => { activeDate = s; render(); };
+            tabs.appendChild(d); t.setDate(t.getDate()+1);
+        }
+
+        let dayData = log[activeDate] || {m1:[], m2:[], m3:[]};
+        let tk=0, tb=0, tj=0, tu=0;
+
+        ['1','2','3'].forEach(n => {
+            let l = document.getElementById('list-m'+n); l.innerHTML = '';
+            let mk=0, mb=0, mj=0, mu=0;
+            (dayData['m'+n]||[]).forEach((it, idx) => {
+                tk+=it.k; tb+=it.b; tj+=it.j; tu+=it.u;
+                mk+=it.k; mb+=it.b; mj+=it.j; mu+=it.u;
+                l.innerHTML += `<div class="item-row">
+                    <div><span class="editable-name" onclick="editWeight('${n}',${idx})">${it.name}</span>
+                    <div class="item-nutrients">Б:${it.b.toFixed(1)} Ж:${it.j.toFixed(1)} (${it.w}г)</div></div>
+                    <div class="kcal-badge">${it.k} ккал <b onclick="del('${n}',${idx})" style="color:#ddd; margin-left:10px; cursor:pointer; font-size:1.5rem">×</b></div>
+                </div>`;
+            });
+            document.getElementById('foot-m'+n).innerText = `ИТОГО: ${Math.round(mk)} ккал | Б:${mb.toFixed(1)} Ж:${mj.toFixed(1)} У:${mu.toFixed(1)}`;
+        });
+
+        let dayIdx = new Date(activeDate).getDay();
+        let targetK = customTargets[activeDate]?.k || ([1,3,5].includes(dayIdx) ? 2350 : 2150);
+        let targetB = customTargets[activeDate]?.b || 130;
+        let targetJ = customTargets[activeDate]?.j || 60;
+
+        document.getElementById('d-k').innerText = Math.round(tk);
+        document.getElementById('d-b').innerText = tb.toFixed(1);
+        document.getElementById('d-j').innerText = tj.toFixed(1);
+        document.getElementById('d-u').innerText = tu.toFixed(1);
+        document.getElementById('target-k-btn').innerText = `цель: ${targetK}`;
+        document.getElementById('target-b-btn').innerText = `цель: ${targetB}`;
+        document.getElementById('target-j-btn').innerText = `цель: ${targetJ}`;
+
+        updateBar('bar-k', tk, targetK, tk > targetK ? 'var(--danger)' : 'var(--accent)');
+        updateBar('bar-b', tb, targetB, tb >= targetB ? 'var(--success)' : 'var(--accent)');
+        updateBar('bar-j', tj, targetJ, tj > targetJ ? 'var(--danger)' : 'var(--warning)');
+        updateBar('bar-u', tu, 300, 'var(--accent)');
+
+        renderFilters(); renderCatalog(); renderCafe(); updateWeek();
+    }
+
+    function updateBar(id, val, target, color) {
+        let p = Math.min((val / target) * 100, 100);
+        let el = document.getElementById(id);
+        if(el) { el.style.width = p + '%'; el.style.background = color; }
+    }
+
+    function renderFilters() {
+        const shopF = document.getElementById('shop-filters'), cafeF = document.getElementById('cafe-filters');
+        const shopCats = ['Все', ...new Set(products.filter(p=>p.type==='shop').map(p=>p.cat))];
+        const cafeCats = ['Все', ...new Set(products.filter(p=>p.type==='cafe').map(p=>p.cat))];
+        shopF.innerHTML = shopCats.map(c => `<button class="cat-btn ${shopCat===c?'active':''}" onclick="shopCat='${c}';renderCatalog()">${c}</button>`).join('');
+        cafeF.innerHTML = cafeCats.map(c => `<button class="cat-btn ${cafeCat===c?'active':''}" onclick="cafeCat='${c}';renderCafe()">${c}</button>`).join('');
+    }
+
+    function renderCatalog() {
+        const cat = document.getElementById('catalog'); cat.innerHTML = '';
+        const sVal = document.getElementById('search-input').value.toLowerCase();
+        products.filter(p => p.type === 'shop' && (shopCat === 'Все' || p.cat === shopCat) && p.name.toLowerCase().includes(sVal))
+        .forEach(p => { cat.innerHTML += `<div class="prod-card" onclick='add(${JSON.stringify(p)})'><img src="${p.img}" onerror="this.src='https://via.placeholder.com/100?text=🔍'"><br><b>${p.name}</b></div>`; });
+    }
+
+    function renderCafe() {
+        const cat = document.getElementById('cafe-catalog'); cat.innerHTML = '';
+        const sVal = document.getElementById('search-cafe').value.toLowerCase();
+        products.filter(p => p.type === 'cafe' && (cafeCat === 'Все' || p.cat === cafeCat) && p.name.toLowerCase().includes(sVal))
+        .forEach(p => { cat.innerHTML += `<div class="prod-card" onclick='add(${JSON.stringify(p)})'><img src="${p.img}" onerror="this.src='https://via.placeholder.com/100?text=🔍'"><br><b>${p.name}</b></div>`; });
+    }
+
+    function add(p) {
+        let w = prompt(`Грамм ${p.name}:`, 100); if(!w || isNaN(w)) return;
+        let r = w/100; if(!log[activeDate]) log[activeDate] = {m1:[],m2:[],m3:[]};
+        log[activeDate][activeM].push({name:p.name, w:Number(w), k:Math.round(p.kcal*r), b:p.b*r, j:p.j*r, u:p.u*r, base:p});
+        save();
+    }
+
+    function editWeight(m, idx) {
+        let it = log[activeDate]['m'+m][idx];
+        let nw = prompt(`Вес (было ${it.w}г):`, it.w); if(!nw || isNaN(nw)) return;
+        let r = nw/100, p = it.base;
+        log[activeDate]['m'+m][idx] = {name:p.name, w:Number(nw), k:Math.round(p.kcal*r), b:p.b*r, j:p.j*r, u:p.u*r, base:p};
+        save();
+    }
+
+    function editDayTarget(type) {
+        let nv = prompt(`Цель ${type.toUpperCase()}:`, customTargets[activeDate]?.[type] || 0);
+        if(!nv || isNaN(nv)) return;
+        if(!customTargets[activeDate]) customTargets[activeDate] = {};
+        customTargets[activeDate][type] = Number(nv);
+        localStorage.setItem('nutri_targets_v29', JSON.stringify(customTargets));
+        render();
+    }
+
+    function del(m, i) { log[activeDate]['m'+m].splice(i,1); save(); }
+    function clearDay() { if(confirm('Очистить день?')) { log[activeDate]={m1:[],m2:[],m3:[]}; save(); } }
+    function save() { localStorage.setItem('nutri_log_v29', JSON.stringify(log)); render(); }
+    function changeW(d) { currentBase.setDate(currentBase.getDate()+d); render(); }
+    function copyYesterday() {
+        let y = new Date(activeDate); y.setDate(y.getDate()-1);
+        let s = y.toISOString().split('T')[0];
+        if(log[s]) { log[activeDate] = JSON.parse(JSON.stringify(log[s])); save(); }
+    }
+
+    function updateWeek() {
+        const body = document.getElementById('week-body'); body.innerHTML = '';
+        let t = new Date(currentBase);
+        for(let i=0; i<7; i++) {
+            let s = t.toISOString().split('T')[0], d = log[s] || {m1:[],m2:[],m3:[]};
+            let dk=0, db=0, dj=0, du=0;
+            Object.values(d).forEach(m => m.forEach(it => { dk+=it.k; db+=it.b; dj+=it.j; du+=it.u; }));
+            let dateStr = `${String(t.getDate()).padStart(2,'0')}.${String(t.getMonth()+1).padStart(2,'0')}`;
+            body.innerHTML += `<tr><td style="font-family:Neucha;font-size:1.1rem">${dateStr}</td><td>${Math.round(dk)}</td><td style="${db>=130?'color:var(--success)':''}">${db.toFixed(1)}</td><td style="${dj>60?'color:var(--danger)':''}">${dj.toFixed(1)}</td><td>${du.toFixed(1)}</td></tr>`;
+            t.setDate(t.getDate()+1);
+        }
+    }
+
+    render(); setActive('m1');
+    function setActive(m) { activeM = m; document.querySelectorAll('.meal-section').forEach(s => s.classList.remove('active-meal')); document.getElementById(m).classList.add('active-meal'); }
+</script>
+</body>
+</html>
